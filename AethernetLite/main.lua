@@ -1813,7 +1813,7 @@ function self.GetNearestAethernet(mapID, pos, unlocked)
     end
     return closest, distance
 end
-AceLib2 = "test"
+
 if AceLib == nil then
 	d("[AethernetLite] AceLib Not Found creating spoof")
 	AceLib = {
