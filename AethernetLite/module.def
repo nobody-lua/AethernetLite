@@ -1,0 +1,6 @@
+[Module]
+Name=AethernetLite
+Version=1
+Files=main.lua
+Enabled=1
+Dependencies=minionlib
