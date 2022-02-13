@@ -1764,6 +1764,7 @@ self.AetherNets = {
     }, -- Old Sharlayan
 }
 
+
 function self.GetNearestAethernet(mapID, pos, unlocked)
     local aelist = Player:GetAetheryteList()
     if (table.valid(aelist)) == false then
@@ -1772,8 +1773,41 @@ function self.GetNearestAethernet(mapID, pos, unlocked)
     local closest = nil
     local distance = nil
     for netIndex, net in pairs(self.AetherNets) do
-        if table.contains(net.mapIDs, mapID) then
 
+        if unlocked == nil and mapID ~= Player.localmapid and table.contains(net.mapIDs, mapID) == false then
+            -- if unlocked is nil then mapID is the destination mapID and pos is the destination pos
+            if table.contains(net.mapIDs, Player.localmapid) then
+                --check if player can access aethernet
+                for _, _mapid in pairs(net.mapIDs) do
+                    --loop over possible maps with shards
+                    if ffxiv_map_nav.data[_mapid] ~= nil then
+                        --check if map has connections
+                        if ffxiv_map_nav.data[_mapid][mapID] ~= nil then
+                            --check of map has connection to destination
+                            for shardIndex, shard in pairs(net.AetherNet) do
+                                --loop over shards with a connection
+                                if shard.mapid == _mapid then
+                                    --end shard is on the map connected to the destination
+                                    local nextPos = ml_nav_manager.GetNextPathPos(shard.pos, shard.mapid, mapID) --path from shard to connection
+                                    local dist = math.distance3d(nextPos, { x = shard.pos.x, y = shard.pos.y, z = shard.pos.z }) --distance from shard to connection
+                                    if distance == nil then
+                                        --first valid distance
+                                        distance = dist
+                                        closest = shard
+                                    elseif distance > dist then
+                                        --distance from this shard is shorter
+                                        distance = dist
+                                        closest = shard
+                                    end
+                                end
+                            end
+                            return closest, distance
+                        end
+                    end
+                end
+            end
+        elseif table.contains(net.mapIDs, mapID) then
+            -- if unlocked is not nil then mapID is Player.localmapid and pos is Player.pos
             for shardIndex, shard in pairs(net.AetherNet) do
                 local shardIsValid = false
                 if unlocked == nil then
@@ -1784,20 +1818,17 @@ function self.GetNearestAethernet(mapID, pos, unlocked)
                     end
                 end
                 if unlocked == 1 then
+                    --shard has to be unlocked
                     if aelist[shard.id + 1].isattuned == true then
                         shardIsValid = true
-                    else
-                        shardIsValid = false
                     end
                 end
                 if unlocked == 2 then
+                    --shard has to be locked
                     if aelist[shard.id + 1].isattuned == false then
                         shardIsValid = true
-                    else
-                        shardIsValid = false
                     end
                 end
-
                 if shardIsValid then
                     local tempDistance = math.distance3d(pos, { x = shard.pos.x, y = shard.pos.y, z = shard.pos.z })
                     if distance == nil then
